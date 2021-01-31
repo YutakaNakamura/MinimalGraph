@@ -5,16 +5,8 @@
 #include <QtWidgets/QStylePainter>
 #include <QtWidgets/QStyleOptionFocusRect>
 
-#include <iostream>
-#include <sstream>
-
 constexpr int yAxisMargin = 30;//ここがy軸との間
 
-std::string Val_to_str(double pVal) {
-	std::ostringstream oss;
-	oss << pVal;
-	return oss.str();
-}
 
 MinimalGraph::Graph::Graph(QWidget *parent) : QWidget(parent), mXaxis(&mPlotRect), mYaxis(&mPlotRect)
 {
@@ -24,7 +16,8 @@ MinimalGraph::Graph::Graph(QWidget *parent) : QWidget(parent), mXaxis(&mPlotRect
 }
 
 MinimalGraph::Graph::~Graph()
-{}
+{
+}
 
 void MinimalGraph::Graph::paintEvent(QPaintEvent *event) {
 	QStylePainter painter(this);
@@ -36,6 +29,32 @@ void MinimalGraph::Graph::paintEvent(QPaintEvent *event) {
 		//option.backgroundColor = palette().dark().color();
 		painter.drawPrimitive(QStyle::PE_FrameFocusRect, option);
 	}
+}
+
+void MinimalGraph::Graph::resizeEvent(QResizeEvent *event) {
+
+	QRect nowrect = rect();
+	int xsize = nowrect.width();
+	int ysize = nowrect.height();
+
+
+	//TOOD initをすると軸のMINMAX定義が変わってしまう。
+	double Xmax = mXaxis.getLabelMax();
+	double Xmin = mXaxis.getLabelMin();
+
+
+	//サイズ変更するので再init
+	init();
+
+	setYrange(65535, 0);
+	setXrange(Xmax, Xmin);
+
+
+	//再描画
+	clearPlot();
+	drawGraph();
+
+
 }
 
 void MinimalGraph::Graph::init() {
@@ -71,10 +90,10 @@ void MinimalGraph::Graph::init() {
 	mPlotRect = rect;
 
 	if (!mRect.isValid()) {
-		throw std::runtime_error("some error message");
+		throw std::runtime_error("rect error");
 	}
 	if (!mPlotRect.isValid()) {
-		throw std::runtime_error("some error message");
+		throw std::runtime_error("rect error");
 	}
 
 	//axis
@@ -97,6 +116,8 @@ void MinimalGraph::Graph::init() {
 	//mPainter.setPen(mSolidLinePen);
 	//mPainter.drawLine(mPlotRect.left(), mPlotRect.top(), mPlotRect.left(), mPlotRect.bottom());
 	//mPainter.drawRect(mPlotRect.adjusted(0, 0, -1, -1));
+
+	//data init
 
 
 }
@@ -128,6 +149,20 @@ void MinimalGraph::Graph::addXYData(int pPlotNum, double &pX, double &pY) {
 	data.mY = pY;
 	mGraphData.at(pPlotNum).mPlotXYData.push_back(data);
 }
+
+void MinimalGraph::Graph::addXYData(int pPlotNum, double &pX, double &pY, int pSizeLimit) {
+	XYPair data;
+	data.mX = pX;
+	data.mY = pY;
+	//mGraphData.at(pPlotNum).mPlotXYData.push_back(data);
+	mGraphData.at(pPlotNum).mPlotXYData.emplace_back(data);
+
+	if (mGraphData.at(pPlotNum).mPlotXYData.size() > pSizeLimit) {
+		mGraphData.at(pPlotNum).mPlotXYData.pop_front();
+	}
+
+}
+
 
 void MinimalGraph::Graph::drawGraph() {
 

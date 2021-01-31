@@ -6,9 +6,21 @@
 
 //DATA
 #include <vector>
+#include <deque>
+
+#include <iostream>
+#include <sstream>
 
 namespace MinimalGraph {
 
+	//util func
+	inline std::string Val_to_str(double pVal) {
+		std::ostringstream oss;
+		oss << pVal;
+		return oss.str();
+	};
+
+	//class
 	class XAxis
 	{
 	private:
@@ -30,6 +42,7 @@ namespace MinimalGraph {
 
 		int getTicks() { return mTicks; };
 		double getLabelMax() { return mLabelMax; };
+		double getLabelMin() { return mLabelMin; };
 		double getLabelVal(int pTick) {//ラベル値はynumTicksから直接作らないとキリが悪い
 			double xlabelrate = (mLabelMax - mLabelMin) / mTicks;
 			double xlabelVal = mLabelMin + xlabelrate * pTick;
@@ -101,13 +114,15 @@ namespace MinimalGraph {
 	public:
 		std::string mName;
 		QColor mColor;
-		std::vector<XYPair> mPlotXYData;
+		//std::vector<XYPair> mPlotXYData;
+		std::deque<XYPair> mPlotXYData;
 	};
 
 	class Graph : public QWidget
 	{
 		Q_OBJECT
 	private:
+	protected:
 		QRect mRect;
 		QRect mPlotRect;
 		
@@ -129,6 +144,8 @@ namespace MinimalGraph {
 
 	protected:
 		void paintEvent(QPaintEvent *event);
+		void resizeEvent(QResizeEvent *event);
+
 	public:
 		Graph(QWidget *parent = 0);
 		~Graph();
@@ -143,6 +160,7 @@ namespace MinimalGraph {
 
 		//XYのデータ登録
 		void addXYData(int pPlotNum, double &pX, double &pY);
+		void addXYData(int pPlotNum, double &pX, double &pY, int pSizeLimit);
 
 		void clearPlot();
 		void drawGraph();
